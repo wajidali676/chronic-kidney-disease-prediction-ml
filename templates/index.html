@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CKD Prediction System | LGU Complex Computing Problem</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 { font-size: 2.2em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1em; }
+        
+        .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .content { padding: 30px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        
+        .panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid #2a5298;
+        }
+        
+        .panel h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group { margin-bottom: 15px; }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+        
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        
+        .result-box {
+            display: none;
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            animation: slideDown 0.5s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-box h3 { font-size: 1.8em; margin-bottom: 10px; }
+        .result-box .confidence { font-size: 1.2em; opacity: 0.9; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .stat-card .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2a5298;
+        }
+        
+        .stat-card .label { color: #666; font-size: 0.85em; margin-top: 5px; }
+        
+        .algorithm-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+        
+        .algorithm-list li {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .algorithm-list li .score {
+            font-weight: bold;
+            color: #2ecc71;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🏥 Chronic Kidney Disease Prediction</h1>
+        <p>Machine Learning Based Clinical Decision Support System</p>
+        <div class="badge">LGU Complex Computing Problem (CCP) | CSE6505</div>
+    </div>
+    
+    <div class="content">
+        <div class="grid">
+            <!-- LEFT PANEL: Input Form -->
+            <div>
+                <div class="panel">
+                    <h2>📝 Patient Data Entry</h2>
+                    <form id="predictForm">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label>Age (years)</label>
+                                <input type="number" name="age" placeholder="e.g., 45" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Blood Pressure (mm/Hg)</label>
+                                <input type="number" name="bp" placeholder="e.g., 80" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Specific Gravity</label>
+                                <input type="number" step="0.001" name="sg" placeholder="e.g., 1.020" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Albumin (0-5)</label>
+                                <input type="number" name="al" placeholder="e.g., 1" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Sugar (0-5)</label>
+                                <input type="number" name="su" placeholder="e.g., 0" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Blood Glucose Random</label>
+                                <input type="number" name="bgr" placeholder="e.g., 121" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Blood Urea</label>
+                                <input type="number" name="bu" placeholder="e.g., 36" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Serum Creatinine</label>
+                                <input type="number" step="0.1" name="sc" placeholder="e.g., 1.2" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Sodium</label>
+                                <input type="number" name="sod" placeholder="e.g., 138" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Potassium</label>
+                                <input type="number" step="0.1" name="pot" placeholder="e.g., 4.4" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Hemoglobin</label>
+                                <input type="number" step="0.1" name="hemo" placeholder="e.g., 15.4" required>
+                            </div>
+                            <div class="form-group">
+                                <label>PCV (%)</label>
+                                <input type="number" name="pcv" placeholder="e.g., 44" required>
+                            </div>
+                            <div class="form-group">
+                                <label>WBC Count</label>
+                                <input type="number" name="wbcc" placeholder="e.g., 7800" required>
+                            </div>
+                            <div class="form-group">
+                                <label>RBC Count</label>
+                                <input type="number" step="0.1" name="rbcc" placeholder="e.g., 5.2" required>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                            <div class="form-group">
+                                <label>Red Blood Cells</label>
+                                <select name="rbc" required>
+                                    <option value="normal">Normal</option>
+                                    <option value="abnormal">Abnormal</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Pus Cell</label>
+                                <select name="pc" required>
+                                    <option value="normal">Normal</option>
+                                    <option value="abnormal">Abnormal</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Pus Cell Clumps</label>
+                                <select name="pcc" required>
+                                    <option value="notpresent">Not Present</option>
+                                    <option value="present">Present</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Bacteria</label>
+                                <select name="ba" required>
+                                    <option value="notpresent">Not Present</option>
+                                    <option value="present">Present</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Hypertension</label>
+                                <select name="htn" required>
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Diabetes Mellitus</label>
+                                <select name="dm" required>
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>CAD</label>
+                                <select name="cad" required>
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Appetite</label>
+                                <select name="appet" required>
+                                    <option value="good">Good</option>
+                                    <option value="poor">Poor</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Pedal Edema</label>
+                                <select name="pe" required>
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Anemia</label>
+                                <select name="ane" required>
+                                    <option value="no">No</option>
+                                    <option value="yes">Yes</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn">🔍 Predict CKD Status</button>
+                    </form>
+                    
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Analyzing patient data...</p>
+                    </div>
+                    
+                    <div class="result-box" id="resultBox">
+                        <h3 id="predictionText"></h3>
+                        <div class="confidence" id="confidenceText"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RIGHT PANEL: Results Dashboard -->
+            <div>
+                <div class="panel" style="border-left-color: #2ecc71;">
+                    <h2>📊 Model Performance</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="value">100%</div>
+                            <div class="label">Best Model Accuracy<br><small>(Random Forest)</small></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="value">9</div>
+                            <div class="label">ML Algorithms<br><small>Tested</small></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="value">5-Fold</div>
+                            <div class="label">Cross<br>Validation</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="value">24</div>
+                            <div class="label">Clinical<br>Features</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel" style="margin-top: 20px; border-left-color: #e74c3c;">
+                    <h2>🤖 Algorithms Used</h2>
+                    <ul class="algorithm-list">
+                        <li>Random Forest <span class="score">100.0%</span></li>
+                        <li>SVM (RBF Kernel) <span class="score">98.8%</span></li>
+                        <li>Logistic Regression <span class="score">98.8%</span></li>
+                        <li>AdaBoost <span class="score">98.8%</span></li>
+                        <li>KNN (k=5) <span class="score">97.5%</span></li>
+                        <li>Naive Bayes <span class="score">97.5%</span></li>
+                        <li>Decision Tree <span class="score">97.5%</span></li>
+                        <li>Gradient Boosting <span class="score">96.3%</span></li>
+                        <li>Voting Classifier <span class="score">96.3%</span></li>
+                    </ul>
+                </div>
+                
+                <div class="panel" style="margin-top: 20px; border-left-color: #f39c12;">
+                    <h2>⚡ Top Predictive Features</h2>
+                    <ul class="algorithm-list">
+                        <li>Hemoglobin <span style="color:#e74c3c; font-weight:bold;">22.5%</span></li>
+                        <li>PCV <span style="color:#e74c3c; font-weight:bold;">16.3%</span></li>
+                        <li>Serum Creatinine <span style="color:#e74c3c; font-weight:bold;">12.2%</span></li>
+                        <li>RBC Count <span style="color:#e74c3c; font-weight:bold;">11.6%</span></li>
+                        <li>Specific Gravity <span style="color:#e74c3c; font-weight:bold;">11.0%</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Developed for CCP Machine Learning Project | Instructor: Sahar Moin | BSCS 6th Semester</p>
+        <p style="margin-top:5px; font-size:0.8em; opacity:0.7;">Ensemble Learning: Random Forest, Gradient Boosting, AdaBoost, Voting Classifier</p>
+    </div>
+</div>
+
+<script>
+document.getElementById('predictForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const loading = document.getElementById('loading');
+    const resultBox = document.getElementById('resultBox');
+    const formData = new FormData(this);
+    
+    loading.style.display = 'block';
+    resultBox.style.display = 'none';
+    
+    try {
+        const response = await fetch('/predict', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        loading.style.display = 'none';
+        
+        if(data.error) {
+            alert('Error: ' + data.error);
+            return;
+        }
+        
+        resultBox.style.background = data.risk_color;
+        resultBox.style.color = 'white';
+        document.getElementById('predictionText').textContent = data.prediction;
+        document.getElementById('confidenceText').textContent = 'Confidence: ' + data.confidence;
+        resultBox.style.display = 'block';
+        
+    } catch(err) {
+        loading.style.display = 'none';
+        alert('Connection error. Make sure Flask server is running.');
+    }
+});
+</script>
+
+</body>
+</html>
